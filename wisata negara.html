@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teka-Teki Dunia: 100 Level</title>
+    <style>
+        * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, sans-serif; }
+        body {
+            background: #1a1a2e;
+            color: #fff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 15px;
+        }
+        .game-card {
+            background: #16213e;
+            padding: 25px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            background: #e94560;
+            padding: 10px 15px;
+            border-radius: 10px;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+        .badge {
+            background: #4ecca3;
+            color: #1a1a2e;
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        .clue { font-size: 1.2rem; margin: 20px 0; min-height: 60px; line-height: 1.5; }
+        .hint-display {
+            font-family: monospace;
+            font-size: 1.5rem;
+            letter-spacing: 5px;
+            color: #ffca28;
+            margin-bottom: 20px;
+        }
+        input {
+            width: 100%;
+            padding: 15px;
+            border-radius: 10px;
+            border: 2px solid #0f3460;
+            background: #1a1a2e;
+            color: #fff;
+            font-size: 1.1rem;
+            text-align: center;
+            margin-bottom: 15px;
+        }
+        .btn-box { display: flex; gap: 10px; }
+        button {
+            flex: 1;
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.2s;
+        }
+        .btn-check { background: #e94560; color: white; }
+        .btn-hint { background: #4ecca3; color: #1a1a2e; }
+        .feedback { margin-top: 15px; height: 20px; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div class="game-card">
+    <div class="header">
+        <span id="lvlTxt">Level: 1/100</span>
+        <span id="scrTxt">Skor: 0</span>
+    </div>
+    
+    <div id="regionBadge" class="badge">Asia</div>
+    <h3 id="countryTxt" style="margin: 10px 0; color: #e94560;">Negara</h3>
+    <div id="clueTxt" class="clue">Memuat petunjuk...</div>
+    
+    <div id="hintTxt" class="hint-display"></div>
+    
+    <input type="text" id="ansInput" placeholder="Jawabanmu..." autocomplete="off">
+    
+    <div class="btn-box">
+        <button class="btn-hint" onclick="useHint()">💡 Hint (-5)</button>
+        <button class="btn-check" id="mainBtn" onclick="handleAction()">Jawab!</button>
+    </div>
+    
+    <div id="feedTxt" class="feedback"></div>
+</div>
+
+<script>
+    const levels = [
+        // ASIA
+        {c:"Indonesia", q:"Candi Buddha terbesar di dunia, berlokasi di Magelang.", a:"Borobudur", r:"Asia"},
+        {c:"Jepang", q:"Gunung tertinggi dan bersalju ikonik yang menjadi simbol negara.", a:"Fuji", r:"Asia"},
+        {c:"Tiongkok", q:"Benteng pertahanan raksasa yang membentang ribuan kilometer.", a:"Tembok Besar", r:"Asia"},
+        {c:"India", q:"Mausoleum marmer putih yang dibangun Shah Jahan untuk istrinya.", a:"Taj Mahal", r:"Asia"},
+        {c:"Kamboja", q:"Kompleks kuil Hindu-Buddha raksasa di Siem Reap.", a:"Angkor Wat", r:"Asia"},
+        {c:"Vietnam", q:"Teluk dengan ribuan pulau batu kapur (karst) yang indah.", a:"Ha Long Bay", r:"Asia"},
+        {c:"Malaysia", q:"Menara kembar ikonik di Kuala Lumpur.", a:"Petronas", r:"Asia"},
+        {c:"Singapura", q:"Patung singa berbadan ikan yang menjadi ikon negara.", a:"Merlion", r:"Asia"},
+        {c:"Thailand", q:"Istana megah di Bangkok, kediaman resmi raja Thailand.", a:"Grand Palace", r:"Asia"},
+        {c:"Korea Selatan", q:"Istana terbesar di Seoul peninggalan Dinasti Joseon.", a:"Gyeongbokgung", r:"Asia"},
+        {c:"Filipina", q:"Terasering sawah kuno di pegunungan Ifugao.", a:"Banaue", r:"Asia"},
+        {c:"Myanmar", q:"Kawasan dengan ribuan pagoda dan kuil kuno di tepi sungai.", a:"Bagan", r:"Asia"},
+        {c:"Nepal", q:"Gunung tertinggi di dunia.", a:"Everest", r:"Asia"},
+        {c:"Sri Lanka", q:"Benteng batu kuno yang dibangun di atas tebing raksasa.", a:"Sigiriya", r:"Asia"},
+        {c:"Tiongkok", q:"Ribuan patung tentara tanah liat penjaga makam kaisar.", a:"Terracotta", r:"Asia"},
+        {c:"Taiwan", q:"Gedung tinggi di Taipei yang bentuknya mirip bambu.", a:"Taipei 101", r:"Asia"},
+        {c:"Indonesia", q:"Habitat asli kadal raksasa purba di NTT.", a:"Pulau Komodo", r:"Asia"},
+        {c:"Jepang", q:"Kuil dengan ribuan gerbang Torii merah di Kyoto.", a:"Fushimi Inari", r:"Asia"},
+        {c:"Laos", q:"Air terjun bertingkat dengan air biru di Luang Prabang.", a:"Kuang Si", r:"Asia"},
+        {c:"Korea Selatan", q:"Pulau vulkanik cantik di selatan semenanjung Korea.", a:"Jeju", r:"Asia"},
+        {c:"Tiongkok", q:"Istana kayu raksasa di pusat Beijing.", a:"Kota Terlarang", r:"Asia"},
+        {c:"India", q:"Kota suci di tepi sungai Gangga.", a:"Varanasi", r:"Asia"},
+        {c:"Thailand", q:"Kuil Fajar di tepi sungai Chao Phraya.", a:"Wat Arun", r:"Asia"},
+        {c:"Malaysia", q:"Gua kapur dengan patung Dewa Murugan raksasa.", a:"Batu Caves", r:"Asia"},
+        {c:"Jepang", q:"Kota bersejarah yang hancur oleh bom atom pertama.", a:"Hiroshima", r:"Asia"},
+        {c:"Indonesia", q:"Danau vulkanik terbesar di dunia dengan pulau di tengahnya.", a:"Danau Toba", r:"Asia"},
+        {c:"Singapura", q:"Hutan buatan futuristik dengan pohon raksasa.", a:"Gardens by the Bay", r:"Asia"},
+        {c:"Bhutan", q:"Kuil 'Sarang Harimau' yang menggantung di tebing.", a:"Taktsang", r:"Asia"},
+        {c:"Tiongkok", q:"Gunung pilar batu yang jadi inspirasi film Avatar.", a:"Zhangjiajie", r:"Asia"},
+        {c:"Filipina", q:"Bukit-bukit unik di Bohol yang bisa berubah warna cokelat.", a:"Chocolate Hills", r:"Asia"},
+        {c:"Indonesia", q:"Candi Hindu terbesar di Indonesia yang ada di Sleman.", a:"Prambanan", r:"Asia"},
+        {c:"Vietnam", q:"Kota tua yang terkenal dengan ribuan lenteranya.", a:"Hoi An", r:"Asia"},
+        {c:"Jepang", q:"Persimpangan jalan paling ramai di dunia di Tokyo.", a:"Shibuya", r:"Asia"},
+        {c:"India", q:"Istana merah muda dengan banyak jendela di Jaipur.", a:"Hawa Mahal", r:"Asia"},
+        {c:"Mongolia", q:"Gurun pasir luas yang mencakup Tiongkok dan Mongolia.", a:"Gobi", r:"Asia"},
+
+        // TIMUR TENGAH
+        {c:"Yordania", q:"Kota kuno yang dipahat langsung di tebing batu merah.", a:"Petra", r:"Timur Tengah"},
+        {c:"Uni Emirat Arab", q:"Gedung tertinggi di dunia yang ada di Dubai.", a:"Burj Khalifa", r:"Timur Tengah"},
+        {c:"Arab Saudi", q:"Kota suci tempat berdirinya Kakbah.", a:"Mekkah", r:"Timur Tengah"},
+        {c:"Turki", q:"Bangunan ikonik Istanbul yang pernah jadi gereja dan masjid.", a:"Hagia Sophia", r:"Timur Tengah"},
+        {c:"Palestina", q:"Masjid dengan kubah emas di Yerusalem.", a:"Dome of the Rock", r:"Timur Tengah"},
+        {c:"Turki", q:"Wilayah yang terkenal dengan balon udara dan rumah gua.", a:"Cappadocia", r:"Timur Tengah"},
+        {c:"Israel/Yordania", q:"Danau paling asin di mana manusia bisa mengapung.", a:"Laut Mati", r:"Timur Tengah"},
+        {c:"Uni Emirat Arab", q:"Pulau buatan berbentuk pohon palem.", a:"Palm Jumeirah", r:"Timur Tengah"},
+        {c:"Iran", q:"Reruntuhan megah ibu kota kuno Persia.", a:"Persepolis", r:"Timur Tengah"},
+        {c:"Turki", q:"Kolam air panas terasering putih bak salju.", a:"Pamukkale", r:"Timur Tengah"},
+        {c:"Arab Saudi", q:"Kota nabi yang memiliki Masjid Nabawi.", a:"Madinah", r:"Timur Tengah"},
+        {c:"Yaman", q:"Kota dengan gedung tinggi dari tanah liat.", a:"Shibam", r:"Timur Tengah"},
+        {c:"Lebanon", q:"Gua bawah tanah spektakuler di dekat Beirut.", a:"Jeita Grotto", r:"Timur Tengah"},
+        {c:"Oman", q:"Masjid agung di Muscat dengan karpet raksasa.", a:"Sultan Qaboos", r:"Timur Tengah"},
+        {c:"Uni Emirat Arab", q:"Hotel mewah berbentuk layar kapal.", a:"Burj Al Arab", r:"Timur Tengah"},
+        {c:"Qatar", q:"Pasar tradisional paling terkenal di Doha.", a:"Souq Waqif", r:"Timur Tengah"},
+        {c:"Turki", q:"Selat yang memisahkan benua Asia dan Eropa.", a:"Bosporus", r:"Timur Tengah"},
+        {c:"Arab Saudi", q:"Situs makam batu kuno Nabath (Hegra).", a:"Madain Saleh", r:"Timur Tengah"},
+        {c:"Suriah", q:"Masjid agung bersejarah di kota Damaskus.", a:"Umayyad", r:"Timur Tengah"},
+        {c:"Kuwait", q:"Menara air ikonik dengan bola-bola biru.", a:"Kuwait Towers", r:"Timur Tengah"},
+        {c:"Turki", q:"Istana pusat pemerintahan Ottoman di Istanbul.", a:"Topkapi", r:"Timur Tengah"},
+        {c:"Irak", q:"Menara spiral kuno di Samarra.", a:"Malwiya", r:"Timur Tengah"},
+        {c:"Mesir", q:"Satu-satunya keajaiban dunia kuno yang masih berdiri.", a:"Piramida Giza", r:"Timur Tengah"},
+        {c:"Libanon", q:"Kuil Romawi raksasa di lembah Beqaa.", a:"Baalbek", r:"Timur Tengah"},
+        {c:"Iran", q:"Masjid merah muda dengan kaca patri warna-warni.", a:"Nasir al Mulk", r:"Timur Tengah"},
+        {c:"Turki", q:"Pasar tertutup terbesar dan tertua di dunia.", a:"Grand Bazaar", r:"Timur Tengah"},
+        {c:"Bahrain", q:"Pohon yang tumbuh di tengah gurun tanpa air.", a:"Tree of Life", r:"Timur Tengah"},
+        {c:"Arab Saudi", q:"Pusat pemerintahan modern di ibu kota.", a:"Riyadh", r:"Timur Tengah"},
+        {c:"Mesir", q:"Kuil yang dipahat di gunung dan dipindahkan oleh UNESCO.", a:"Abu Simbel", r:"Timur Tengah"},
+        {c:"Mesir", q:"Sungai terpanjang di dunia yang melintasi Kairo.", a:"Nil", r:"Timur Tengah"},
+
+        // EROPA
+        {c:"Prancis", q:"Menara besi paling terkenal di dunia.", a:"Eiffel", r:"Eropa"},
+        {c:"Italia", q:"Amfiteater gladiator di Roma.", a:"Colosseum", r:"Eropa"},
+        {c:"Inggris", q:"Menara jam raksasa di London.", a:"Big Ben", r:"Eropa"},
+        {c:"Yunani", q:"Kuil kuno di atas bukit Acropolis.", a:"Parthenon", r:"Eropa"},
+        {c:"Rusia", q:"Gereja berkubah bawang warna-warni di Moskow.", a:"Saint Basil", r:"Eropa"},
+        {c:"Italia", q:"Menara miring di kota Pisa.", a:"Menara Pisa", r:"Eropa"},
+        {c:"Jerman", q:"Kastil inspirasi Disney di Bavaria.", a:"Neuschwanstein", r:"Eropa"},
+        {c:"Spanyol", q:"Gereja besar Gaudi yang belum selesai.", a:"Sagrada Familia", r:"Eropa"},
+        {c:"Belanda", q:"Taman bunga tulip terbesar di dunia.", a:"Keukenhof", r:"Eropa"},
+        {c:"Prancis", q:"Museum seni yang menyimpan Monalisa.", a:"Louvre", r:"Eropa"},
+        {c:"Italia", q:"Kota dengan kanal dan gondola.", a:"Venesia", r:"Eropa"},
+        {c:"Inggris", q:"Susunan batu misterius dari zaman purba.", a:"Stonehenge", r:"Eropa"},
+        {c:"Vatikan", q:"Negara terkecil sekaligus pusat gereja katolik.", a:"Vatikan", r:"Eropa"},
+        {c:"Islandia", q:"Pemandian air panas bumi berwarna biru.", a:"Blue Lagoon", r:"Eropa"},
+        {c:"Swiss", q:"Gunung piramida ikonik di Alpen.", a:"Matterhorn", r:"Eropa"},
+        {c:"Rusia", q:"Museum seni raksasa di Saint Petersburg.", a:"Hermitage", r:"Eropa"},
+        {c:"Yunani", q:"Pulau romantis dengan rumah putih kubah biru.", a:"Santorini", r:"Eropa"},
+        {c:"Norwegia", q:"Lidah tebing batu yang menonjol di atas danau.", a:"Trolltunga", r:"Eropa"},
+        {c:"Belgia", q:"Patung bocah laki-laki buang air kecil di Brussels.", a:"Manneken Pis", r:"Eropa"},
+        {c:"Republik Ceko", q:"Jembatan bersejarah penuh patung di Praha.", a:"Jembatan Charles", r:"Eropa"},
+        {c:"Hungaria", q:"Gedung parlemen megah di tepi sungai Donau.", a:"Parlemen Budapest", r:"Eropa"},
+        {c:"Austria", q:"Istana musim panas Habsburg di Wina.", a:"Schonbrunn", r:"Eropa"},
+        {c:"Spanyol", q:"Istana peninggalan Islam Moor di Granada.", a:"Alhambra", r:"Eropa"},
+        {c:"Denmark", q:"Patung putri duyung kecil di pelabuhan Kopenhagen.", a:"Little Mermaid", r:"Eropa"},
+        {c:"Kroasia", q:"Kota tua bertembok di tepi laut Adriatik.", a:"Dubrovnik", r:"Eropa"},
+        {c:"Portugal", q:"Menara benteng ikonik di tepi sungai Lisbon.", a:"Menara Belem", r:"Eropa"},
+        {c:"Skotlandia", q:"Danau misterius yang konon ada monster di dalamnya.", a:"Loch Ness", r:"Eropa"},
+        {c:"Polandia", q:"Bekas kamp konsentrasi bersejarah yang menyedihkan.", a:"Auschwitz", r:"Eropa"},
+        {c:"Irlandia", q:"Tebing hijau terjal yang menghadap Atlantik.", a:"Cliffs of Moher", r:"Eropa"},
+        {c:"Swedia", q:"Hotel yang seluruh bangunannya terbuat dari es.", a:"Icehotel", r:"Eropa"},
+        {c:"Turki", q:"Kota yang berada di dua benua (Sisi Eropa).", a:"Istanbul", r:"Eropa"},
+        {c:"Swiss", q:"Kota di tepi danau dengan jembatan kayu Chapel.", a:"Lucerne", r:"Eropa"},
+        {c:"Prancis", q:"Istana termegah tempat tinggal Raja Louis XIV.", a:"Versailles", r:"Eropa"},
+        {c:"Italia", q:"Kota kuno yang terkubur debu vulkanik.", a:"Pompeii", r:"Eropa"},
+        {c:"Inggris", q:"Kincir ria raksasa di tepi sungai Thames.", a:"London Eye", r:"Eropa"}
+    ];
+
+    let current = 0;
+    let score = 0;
+    let hIndex = 0;
+
+    function init() {
+        if(current >= levels.length) {
+            document.body.innerHTML = `<div class='game-card'><h1>🎉 TAMAT!</h1><p>Skor Akhir: ${score}</p><button onclick='location.reload()'>Main Lagi</button></div>`;
+            return;
+        }
+        const lv = levels[current];
+        document.getElementById('lvlTxt').innerText = `Level: ${current + 1}/100`;
+        document.getElementById('regionBadge').innerText = lv.r;
+        document.getElementById('countryTxt').innerText = lv.c;
+        document.getElementById('clueTxt').innerText = lv.q;
+        document.getElementById('ansInput').value = "";
+        document.getElementById('feedTxt').innerText = "";
+        document.getElementById('mainBtn').innerText = "Jawab!";
+        document.getElementById('mainBtn').onclick = check;
+        hIndex = 0;
+        showHint();
+    }
+
+    function showHint() {
+        const ans = levels[current].a;
+        let str = "";
+        for(let i=0; i<ans.length; i++) {
+            if(ans[i] === " ") str += " ";
+            else if(i < hIndex) str += ans[i];
+            else str += "_";
+        }
+        document.getElementById('hintTxt').innerText = str;
+    }
+
+    function useHint() {
+        if(score >= 5) {
+            if(hIndex < levels[current].a.length) {
+                hIndex++;
+                score -= 5;
+                document.getElementById('scrTxt').innerText = `Skor: ${score}`;
+                showHint();
+            }
+        } else {
+            alert("Skor minimal 5 untuk hint!");
+        }
+    }
+
+    function check() {
+        const user = document.getElementById('ansInput').value.toLowerCase().replace(/\s/g, '');
+        const real = levels[current].a.toLowerCase().replace(/\s/g, '');
+        if(user === real) {
+            score += 20;
+            document.getElementById('scrTxt').innerText = `Skor: ${score}`;
+            document.getElementById('feedTxt').style.color = "#4ecca3";
+            document.getElementById('feedTxt').innerText = "BENAR! +20";
+            document.getElementById('mainBtn').innerText = "Lanjut";
+            document.getElementById('mainBtn').onclick = next;
+        } else {
+            document.getElementById('feedTxt').style.color = "#e94560";
+            document.getElementById('feedTxt').innerText = "SALAH! Coba lagi.";
+        }
+    }
+
+    function next() {
+        current++;
+        init();
+    }
+
+    init();
+</script>
+</body>
+</html>
